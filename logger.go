@@ -11,7 +11,7 @@ import (
 
 type any = interface{}
 
-//
+// Main
 // Logger struct is the main structure of CSV-ES Logger
 type Logger struct {
 	level        Level
