@@ -11,6 +11,7 @@ import (
 
 type any = interface{}
 
+//
 // Logger struct is the main structure of CSV-ES Logger
 type Logger struct {
 	level        Level
@@ -42,8 +43,6 @@ const (
 
 // NewLogger create a new Logger
 func (logger *Logger) SetLevel(level Level) {
-	fmt.Printf("Log Counter, Proccess Name, Level, Message\n")
-
 	logger.level = level
 	logger.msgCounter = 0
 	logger.es = nil
@@ -91,7 +90,7 @@ func (log *Logger) write(level Level, format string, args ...any) {
 		return
 	}
 	// Output to Terminal
-	fmt.Printf("%d,[%s],", log.msgCounter, level)
+	fmt.Printf("%s [%s] ", time.Now().Format(time.RFC822), level)
 	fmt.Printf(format, args...)
 	fmt.Printf("\n")
 	if log.es != nil {
@@ -109,10 +108,10 @@ func (log *Logger) write(level Level, format string, args ...any) {
 		)
 		if err != nil {
 			log.msgCounter++
-			fmt.Printf("%d,[%s],", log.msgCounter, LevelFatal)
-			fmt.Printf("Logger ES Index Fail: %s", err)
+			fmt.Printf("%s [%s] ", time.Now().Format(time.RFC822), LevelFatal)
+			fmt.Printf("ElasticSearch Index Update Error: %s\n", err)
 		}
-		defer res.Body.Close()
+		res.Body.Close()
 	}
 }
 
