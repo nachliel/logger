@@ -11,7 +11,6 @@ import (
 
 type any = interface{}
 
-//
 // Logger struct is the main structure of CSV-ES Logger
 type Logger struct {
 	level        Level
@@ -41,60 +40,62 @@ const (
 	LevelFatal
 )
 
+var Settings Logger
+
 // NewLogger create a new Logger
-func (logger *Logger) SetLevel(level Level) {
-	logger.level = level
-	logger.msgCounter = 0
-	logger.es = nil
+func SetLevel(level Level) {
+	Settings.level = level
+	Settings.msgCounter = 0
+	Settings.es = nil
 }
 
 //	Add ElasticSearch Client to log messages there
-func (logger *Logger) addElasticClient(esClient *elasticsearch.Client, index string) {
-	logger.es = esClient
-	logger.indexName = index
+func addElasticClient(esClient *elasticsearch.Client, index string) {
+	Settings.es = esClient
+	Settings.indexName = index
 }
 
 //	Debug Logging
-func (log *Logger) Debug(format string, args ...any) {
-	log.write(LevelDebug, format, args...)
+func Debug(format string, args ...any) {
+	write(LevelDebug, format, args...)
 }
 
 // Info Logging
-func (log *Logger) Info(format string, args ...any) {
-	log.write(LevelInfo, format, args...)
+func Info(format string, args ...any) {
+	write(LevelInfo, format, args...)
 }
 
 // Warn Logging
-func (log *Logger) Warn(format string, args ...any) {
-	log.write(LevelWarn, format, args...)
+func Warn(format string, args ...any) {
+	write(LevelWarn, format, args...)
 }
 
 // Error Logging
-func (log *Logger) Error(format string, args ...any) {
-	log.write(LevelError, format, args...)
+func Error(format string, args ...any) {
+	write(LevelError, format, args...)
 }
 
 // Fatal Logging
-func (log *Logger) Fatal(format string, args ...any) {
-	log.write(LevelFatal, format, args...)
+func Fatal(format string, args ...any) {
+	write(LevelFatal, format, args...)
 	// Exit Failure
 	os.Exit(1)
 }
 
-// write Log to ES and console.
-func (log *Logger) write(level Level, format string, args ...any) {
+// write Log to console, if ES is setup then also to ES.
+func write(level Level, format string, args ...any) {
 	// Log Message counter
-	log.msgCounter++
+	Settings.msgCounter++
 
 	// Check level.. ask Levi... i dunno
-	if level < log.level {
+	if level < Settings.level {
 		return
 	}
 	// Output to Terminal
 	fmt.Printf("%s [%s] ", time.Now().Format(time.RFC822), level)
 	fmt.Printf(format, args...)
 	fmt.Printf("\n")
-	if log.es != nil {
+	if Settings.es != nil {
 		// Write Log to ES
 		jsonElementStruct := JLog{
 			StatusTime: time.Now().UTC(),
@@ -103,12 +104,12 @@ func (log *Logger) write(level Level, format string, args ...any) {
 		}
 		docReader := esutil.NewJSONReader(&jsonElementStruct)
 
-		res, err := log.es.Index(
-			log.indexName, // Index name
-			docReader,     // Document body
+		res, err := Settings.es.Index(
+			Settings.indexName, // Index name
+			docReader,          // Document body
 		)
 		if err != nil {
-			log.msgCounter++
+			Settings.msgCounter++
 			fmt.Printf("%s [%s] ", time.Now().Format(time.RFC822), LevelFatal)
 			fmt.Printf("ElasticSearch Index Update Error: %s\n", err)
 		}
