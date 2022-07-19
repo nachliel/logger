@@ -31,7 +31,7 @@ type JLog struct {
 	Message      string    `json:"message"`
 }
 
-// Levels of Logs
+// Const Name of Log Levels
 const (
 	LevelDebug Level = iota
 	LevelInfo
