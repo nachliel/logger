@@ -48,6 +48,7 @@ func (logger *Logger) SetLevel(level Level) {
 	logger.es = nil
 }
 
+//	Add ElasticSearch Client to log messages there
 func (logger *Logger) addElasticClient(esClient *elasticsearch.Client, index string) {
 	logger.es = esClient
 	logger.indexName = index
