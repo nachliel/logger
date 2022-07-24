@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"time"
@@ -11,20 +12,24 @@ import (
 
 type any = interface{}
 
-// Logger struct is the main structure of CSV-ES Logger
-type Logger struct {
-	level        Level
+// Writer
+var logWriter *bufio.Writer
+
+// logStruct struct is the main structure of the logger settings
+type logStruct struct {
+	level        logLevel
 	msgCounter   int64
 	es           *elasticsearch.Client
 	proccessName string
 	indexName    string
+	timeFormat   string
 }
 
-// Level of error
-type Level int
+// logLevel of error
+type logLevel int
 
-// JLog is the Json structure of log
-type JLog struct {
+// logDoc is the Json structure of log
+type logDoc struct {
 	ProccessName string    `json:"proccess"`
 	StatusTime   time.Time `json:"status_time"`
 	Level        string    `json:"level"`
@@ -33,26 +38,36 @@ type JLog struct {
 
 // Const Name of Log Levels
 const (
-	LevelDebug Level = iota
+	LevelDebug logLevel = iota
 	LevelInfo
 	LevelWarn
 	LevelError
 	LevelFatal
 )
 
-var Settings Logger
+// Settings of the logger
+var settings logStruct
 
 // NewLogger create a new Logger
-func SetLevel(level Level) {
-	Settings.level = level
-	Settings.msgCounter = 0
-	Settings.es = nil
+func SetLevel(level logLevel) {
+	settings.level = level
+}
+
+func SetupWriter(lvl logLevel) {
+	logWriter = bufio.NewWriter(os.Stdout)
+	settings.timeFormat = time.RFC822
+	settings.level = lvl
+}
+
+func SetTimeFormat(format string) {
+	settings.timeFormat = format
 }
 
 //	Add ElasticSearch Client to log messages there
 func addElasticClient(esClient *elasticsearch.Client, index string) {
-	Settings.es = esClient
-	Settings.indexName = index
+	settings.es = esClient
+	settings.indexName = index
+
 }
 
 //	Debug Logging
@@ -83,42 +98,56 @@ func Fatal(format string, args ...any) {
 }
 
 // write Log to console, if ES is setup then also to ES.
-func write(level Level, format string, args ...any) {
+func write(level logLevel, format string, args ...any) {
 	// Log Message counter
-	Settings.msgCounter++
+	settings.msgCounter++
 
-	// Check level.. ask Levi... i dunno
-	if level < Settings.level {
+	if level < settings.level {
 		return
 	}
-	// Output to Terminal
-	fmt.Printf("%s [%s] ", time.Now().Format(time.RFC822), level)
-	fmt.Printf(format, args...)
-	fmt.Printf("\n")
-	if Settings.es != nil {
-		// Write Log to ES
-		jsonElementStruct := JLog{
-			StatusTime: time.Now().UTC(),
-			Level:      level.String(),
-			Message:    fmt.Sprintf(format, args...),
-		}
-		docReader := esutil.NewJSONReader(&jsonElementStruct)
+	logWriter.WriteString(time.Now().Format(settings.timeFormat))
+	logWriter.WriteString(" [")
+	logWriter.WriteString(level.toString())
+	logWriter.WriteString("]\t")
+	logWriter.WriteString(fmt.Sprintf(format, args...))
+	logWriter.WriteString("\n")
+	// Output to Terminal Buffered Write
+	logWriter.Flush()
 
-		res, err := Settings.es.Index(
-			Settings.indexName, // Index name
-			docReader,          // Document body
-		)
-		if err != nil {
-			Settings.msgCounter++
-			fmt.Printf("%s [%s] ", time.Now().Format(time.RFC822), LevelFatal)
-			fmt.Printf("ElasticSearch Index Update Error: %s\n", err)
-		}
-		res.Body.Close()
+	// Send to ElasticSearch if any
+	if settings.es != nil {
+		// Write Log to ES
+		writeESDoc(logDoc{
+			StatusTime: time.Now().UTC(),
+			Level:      level.toString(),
+			Message:    fmt.Sprintf(format, args...),
+		})
 	}
 }
 
+func writeESDoc(doc logDoc) {
+	docReader := esutil.NewJSONReader(&doc)
+	res, err := settings.es.Index(
+		settings.indexName, // Index name
+		docReader,          // Document body
+	)
+	if err != nil {
+		settings.msgCounter++
+
+		logWriter.WriteString(time.Now().Format(settings.timeFormat))
+		logWriter.WriteString(" [")
+		logWriter.WriteString(LevelFatal.toString())
+		logWriter.WriteString("]\tElasticSearch Fatal Error: ")
+		logWriter.WriteString(err.Error())
+		logWriter.WriteString("\n")
+		// Output to Terminal Buffered Write
+		logWriter.Flush()
+	}
+	res.Body.Close()
+}
+
 // Converts Level to string.
-func (level Level) String() string {
+func (level logLevel) toString() string {
 	switch level {
 	case LevelDebug:
 		return "DEBUG"
