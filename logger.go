@@ -53,21 +53,27 @@ func SetLevel(level logLevel) {
 	settings.level = level
 }
 
+// SetupWriter Initiate the logger, must be declared on begging
 func SetupWriter(lvl logLevel) {
 	logWriter = bufio.NewWriter(os.Stdout)
 	settings.timeFormat = time.RFC822
 	settings.level = lvl
+	settings.proccessName = "logger"
 }
 
+// SetTimeFormat settings the logger time format
 func SetTimeFormat(format string) {
 	settings.timeFormat = format
 }
 
 //	Add ElasticSearch Client to log messages there
-func addElasticClient(esClient *elasticsearch.Client, index string) {
+func SetElasticClient(esClient *elasticsearch.Client, index string) {
 	settings.es = esClient
 	settings.indexName = index
+}
 
+func SetProccessName(name string) {
+	settings.proccessName = name
 }
 
 //	Debug Logging
@@ -118,9 +124,10 @@ func write(level logLevel, format string, args ...any) {
 	if settings.es != nil {
 		// Write Log to ES
 		writeESDoc(logDoc{
-			StatusTime: time.Now().UTC(),
-			Level:      level.toString(),
-			Message:    fmt.Sprintf(format, args...),
+			ProccessName: settings.proccessName,
+			StatusTime:   time.Now().UTC(),
+			Level:        level.toString(),
+			Message:      fmt.Sprintf(format, args...),
 		})
 	}
 }
