@@ -1,26 +1,44 @@
 # logger
-Simple logger for Go Application.
+
+A Simple ElasticSearch logger for Go Application.
+
+## Quice Start
+
+The recommended way to use log is to create your own logger ;) The
+simplest way to do this is using this logger.
+
+Start A project and follow the steps below:
+Get the package:
+```
+go get github.com/nachliel/logger@latest
+```
+logger must be initialized before use:
+``` go
+logger.SetupWriter(logger.LevelInfo)
+```
 
 ## Usage ##
-Declare:
-```go
 
+```go
 package main
 
 import (
 	"github.com/nachliel/logger"
 )
 
-var logme logger.Logger
-
 func main() {
   // Sets from what level to output messages
-  logme.SetLevel(logger.LevelInfo)
-  logme.Info("Hello World")
-  logme.Debug("This is Debugging error number: %d",15)
-  // Assign ElasticSearch logs ..
+  logger.SetupWriter(logger.LevelInfo)
+  logger.Info("Hello World")
+  logger.Debug("This is Debugging error number: %d",15) // Will not show, due to choosen level Info.
 }
 ```
+
+## Why?
+`logger` is designed to be a simple and universal go logging library with
+support for indexing the logs to elasticsearch server. You are able to choose from which 
+Level the logger will output. anyhow the looger will output to the console, and ES if 
+choosen to do so.
 
 ### Logger Levels ###
 1. Debug - logger.LevelDebug  - For debug purposes
