@@ -4,10 +4,10 @@ A Simple ElasticSearch logger for Go Application.
 
 ## Quice Start
 
-The recommended way to use log is to create your own logger ;) The
-simplest way to do this is using this logger.
+The recommended way to use log is to create your own logger ;)
+The simplest way to do this is using this logger.
 
-Start A project and follow the steps below:
+Start new project and follow the steps below:
 Get the package:
 ```
 go get github.com/nachliel/logger@latest
