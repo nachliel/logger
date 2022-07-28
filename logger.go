@@ -23,6 +23,7 @@ type logStruct struct {
 	proccessName string
 	indexName    string
 	timeFormat   string
+	fatalTime    int
 }
 
 // logLevel of error
@@ -51,6 +52,12 @@ var settings logStruct
 // NewLogger create a new Logger
 func SetLevel(level logLevel) {
 	settings.level = level
+}
+
+// SetFatalTimer sets time to pause after Fatal Error.
+// Used to pause the proccess from restart by any deamon.
+func SetFatalTimer(ms int) {
+	settings.fatalTime = ms
 }
 
 // SetupWriter Initiate the logger, must be declared on begging
@@ -100,6 +107,7 @@ func Error(format string, args ...any) {
 func Fatal(format string, args ...any) {
 	write(LevelFatal, format, args...)
 	// Exit Failure
+	time.Sleep(time.Duration(settings.fatalTime) * time.Millisecond)
 	os.Exit(1)
 }
 
@@ -149,6 +157,9 @@ func writeESDoc(doc logDoc) {
 		logWriter.WriteString("\n")
 		// Output to Terminal Buffered Write
 		logWriter.Flush()
+		// Exit!
+		time.Sleep(time.Duration(settings.fatalTime) * time.Millisecond)
+		os.Exit(1)
 	}
 	res.Body.Close()
 }
