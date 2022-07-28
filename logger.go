@@ -85,21 +85,33 @@ func SetProccessName(name string) {
 
 //	Debug Logging
 func Debug(format string, args ...any) {
+	if LevelDebug < settings.level {
+		return
+	}
 	write(LevelDebug, format, args...)
 }
 
 // Info Logging
 func Info(format string, args ...any) {
+	if LevelInfo < settings.level {
+		return
+	}
 	write(LevelInfo, format, args...)
 }
 
 // Warn Logging
 func Warn(format string, args ...any) {
+	if LevelWarn < settings.level {
+		return
+	}
 	write(LevelWarn, format, args...)
 }
 
 // Error Logging
 func Error(format string, args ...any) {
+	if LevelError < settings.level {
+		return
+	}
 	write(LevelError, format, args...)
 }
 
@@ -116,9 +128,6 @@ func write(level logLevel, format string, args ...any) {
 	// Log Message counter
 	settings.msgCounter++
 
-	if level < settings.level {
-		return
-	}
 	logWriter.WriteString(time.Now().Format(settings.timeFormat))
 	logWriter.WriteString(" [")
 	logWriter.WriteString(level.toString())
