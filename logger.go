@@ -188,7 +188,6 @@ func writeESDoc(doc logDoc) {
 		logWriter.Flush()
 		// Exit!
 		time.Sleep(time.Duration(settings.fatalTime) * time.Millisecond)
-		res.Body.Close()
 		os.Exit(1)
 	}
 	res.Body.Close()
