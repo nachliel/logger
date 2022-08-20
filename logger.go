@@ -24,6 +24,7 @@ type logStruct struct {
 	indexName    string
 	timeFormat   string
 	fatalTime    int
+	traceActive  bool
 }
 
 // logLevel of error
@@ -60,6 +61,10 @@ func SetFatalTimer(ms int) {
 	settings.fatalTime = ms
 }
 
+func TraceActivate(activate bool) {
+	settings.traceActive = activate
+}
+
 // SetupWriter Initiate the logger, must be declared on begging
 func SetupWriter(lvl logLevel) {
 	logWriter = bufio.NewWriter(os.Stdout)
@@ -81,6 +86,20 @@ func SetElasticClient(esClient *elasticsearch.Client, index string) {
 
 func SetProccessName(name string) {
 	settings.proccessName = name
+}
+
+//	Trace Logging
+func Trace(format string, args ...any) {
+	if settings.traceActive {
+		settings.msgCounter++
+
+		logWriter.WriteString(time.Now().Format(settings.timeFormat))
+		logWriter.WriteString(" [TRACE]\t")
+		logWriter.WriteString(fmt.Sprintf(format, args...))
+		logWriter.WriteString("\n")
+		// Output to Terminal Buffered Write
+		logWriter.Flush()
+	}
 }
 
 //	Debug Logging
@@ -115,7 +134,7 @@ func Error(format string, args ...any) {
 	write(LevelError, format, args...)
 }
 
-// Fatal Logging
+// Fatal Logging Exit 1 from proccess. Panic
 func Fatal(format string, args ...any) {
 	write(LevelFatal, format, args...)
 	// Exit Failure
@@ -154,6 +173,7 @@ func writeESDoc(doc logDoc) {
 	res, err := settings.es.Index(
 		settings.indexName, // Index name
 		docReader,          // Document body
+		settings.es.Index.WithErrorTrace(),
 	)
 	if err != nil {
 		settings.msgCounter++
@@ -168,6 +188,7 @@ func writeESDoc(doc logDoc) {
 		logWriter.Flush()
 		// Exit!
 		time.Sleep(time.Duration(settings.fatalTime) * time.Millisecond)
+		res.Body.Close()
 		os.Exit(1)
 	}
 	res.Body.Close()

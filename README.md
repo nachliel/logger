@@ -37,7 +37,7 @@ func main() {
 ## Why?
 `logger` is designed to be a simple and universal go logging library with
 support for indexing the logs to elasticsearch server. You are able to choose from which 
-Level the logger will output. anyhow the looger will output to the console, and ES if 
+Level the logger will output. anyhow the loger will output to the console, and ES if 
 choosen to do so.
 
 ### Logger Levels ###
