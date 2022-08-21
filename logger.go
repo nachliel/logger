@@ -112,25 +112,16 @@ func Debug(format string, args ...any) {
 
 // Info Logging
 func Info(format string, args ...any) {
-	if LevelInfo < settings.level {
-		return
-	}
 	write(LevelInfo, format, args...)
 }
 
 // Warn Logging
 func Warn(format string, args ...any) {
-	if LevelWarn < settings.level {
-		return
-	}
 	write(LevelWarn, format, args...)
 }
 
 // Error Logging
 func Error(format string, args ...any) {
-	if LevelError < settings.level {
-		return
-	}
 	write(LevelError, format, args...)
 }
 
@@ -155,9 +146,8 @@ func write(level logLevel, format string, args ...any) {
 	logWriter.WriteString("\n")
 	// Output to Terminal Buffered Write
 	logWriter.Flush()
-
 	// Send to ElasticSearch if any
-	if settings.es != nil {
+	if settings.es != nil && level < settings.level {
 		// Write Log to ES
 		writeESDoc(logDoc{
 			ProccessName: settings.proccessName,
