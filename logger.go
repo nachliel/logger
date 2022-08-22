@@ -147,7 +147,7 @@ func write(level logLevel, format string, args ...any) {
 	// Output to Terminal Buffered Write
 	logWriter.Flush()
 	// Send to ElasticSearch if any
-	if settings.es != nil && level < settings.level {
+	if settings.es != nil && level >= settings.level {
 		// Write Log to ES
 		writeESDoc(logDoc{
 			ProccessName: settings.proccessName,
